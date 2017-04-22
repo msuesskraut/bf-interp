@@ -1,0 +1,6 @@
+[package]
+name = "bf-interp"
+version = "0.1.0"
+authors = ["Martin Suesskraut <martin.suesskraut@gmail.com>"]
+
+[dependencies]
