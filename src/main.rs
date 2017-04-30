@@ -2,17 +2,80 @@ use std::fs::File;
 use std::io::{Read, Stdin, Result};
 
 #[derive(Debug)]
+enum Instruction {
+    MoveLeft(usize),
+    MoveRight(usize),
+    Inc(u8),
+    Dec(u8),
+    Input,
+    Output,
+    LoopEntry(usize),
+    LoopExit(usize),
+}
+
+use Instruction::*;
+
+#[derive(Debug)]
 struct Program {
-    instructions: Vec<char>
+    instructions: Vec<Instruction>
 }
 
 impl Program {
     pub fn new(text: String) -> Program
     {
+        // "lex" token stream - aka skip whitespace
+        let token = text.chars().filter(move |c| {
+            *c == '>' || *c == '<' || *c == '+' || *c == '-' ||
+            *c == '.' || *c == ',' || *c == '[' || *c == ']'
+        }).collect::<Vec<_>>();
         Program {
-            instructions: text.chars().filter(move |c| {
-                *c == '>' || *c == '<' || *c == '+' || *c == '-' ||
-                *c == '.' || *c == ',' || *c == '[' || *c == ']'
+            instructions : token.iter().enumerate().map(|(idx, &c)| {
+                match c {
+                    '>' => MoveLeft(1),
+                    '<' => MoveRight(1),
+                    '+' => Inc(1),
+                    '-' => Dec(1),
+                    '.' => Output,
+                    ',' => Input,
+                    '[' => {
+                        let mut bracket_nesting = 1;
+                        let mut pc = idx + 1;
+    
+                        while (bracket_nesting > 0) && (pc < token.len()) {
+                            match token[pc] {
+                                '[' => bracket_nesting += 1,
+                                ']' => bracket_nesting -= 1,
+                                _ => (),
+                            };
+                            pc += 1;
+                        }
+                        if 0 == bracket_nesting {
+                            pc -= 1;
+                        }
+                        else {
+                            panic!("unmachted '[' at pc={:}", idx);
+                        }
+                        LoopEntry(pc)
+                    },
+                    ']' => {
+                        let mut bracket_nesting = 1;
+                        let mut pc = idx;
+
+                        while (bracket_nesting > 0) && (pc > 0) {
+                            pc -= 1;
+                            match token[pc] {
+                                '[' => bracket_nesting -= 1,
+                                ']' => bracket_nesting += 1,
+                                _ => (),
+                            };
+                        }
+                        if 0 != bracket_nesting {
+                            panic!("unmachted ']' at pc={:}", idx);
+                        }
+                        LoopExit(pc)
+                    },
+                    c => panic!("Unknown instruction {:?} at pc={:}", c, idx),
+                }
             }).collect::<Vec<_>>()
         }
     }
@@ -33,49 +96,19 @@ impl Program {
 
         while pc < self.instructions.len() {
             match self.instructions[pc] {
-                '>' => dataptr += 1,
-                '<' => dataptr -= 1,
-                '+' => memory[dataptr] = memory[dataptr].wrapping_add(1),
-                '-' => memory[dataptr] = memory[dataptr].wrapping_sub(1),
-                '.' => print!("{:}", memory[dataptr] as char),
-                ',' => memory[dataptr] = get_char(&mut stdin),
-                '[' => if 0 == memory[dataptr] {
-                    let mut bracket_nesting = 1;
-                    let saved_pc = pc;
-
-                    pc += 1;
-                    while (bracket_nesting > 0) && (pc < self.instructions.len()) {
-                        match self.instructions[pc] {
-                            '[' => bracket_nesting += 1,
-                            ']' => bracket_nesting -= 1,
-                            _ => (),
-                        };
-                        pc += 1;
-                    }
-                    if 0 == bracket_nesting {
-                        pc -= 1;
-                    }
-                    else {
-                        panic!("unmachted '[' at pc={:}", saved_pc);
-                    }
+                MoveLeft(1usize) => dataptr += 1,
+                MoveRight(1usize) => dataptr -= 1,
+                Inc(1u8) => memory[dataptr] = memory[dataptr].wrapping_add(1),
+                Dec(1u8) => memory[dataptr] = memory[dataptr].wrapping_sub(1),
+                Output => print!("{:}", memory[dataptr] as char),
+                Input => memory[dataptr] = get_char(&mut stdin),
+                LoopEntry(target) => if 0 == memory[dataptr] {
+                    pc = target;
                 },
-                ']' => if 0 != memory[dataptr] {
-                    let mut bracket_nesting = 1;
-                    let saved_pc = pc;
-
-                    while (bracket_nesting > 0) && (pc > 0) {
-                        pc -= 1;
-                        match self.instructions[pc] {
-                            '[' => bracket_nesting -= 1,
-                            ']' => bracket_nesting += 1,
-                            _ => (),
-                        };
-                    }
-                    if 0 != bracket_nesting {
-                        panic!("unmachted ']' at pc={:}", saved_pc);
-                    }
+                LoopExit(target) => if 0 != memory[dataptr] {
+                    pc = target;
                 },
-                c => panic!("Unknown instruction {:?} at pc={:}", c, pc),
+                ref c => panic!("Unknown instruction {:?} at pc={:}", c, pc),
             }
             pc += 1;
         }
