@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Stdin, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 enum Instruction {
     MoveLeft(usize),
     MoveRight(usize),
@@ -31,8 +31,8 @@ impl Program {
         Program {
             instructions : token.iter().enumerate().map(|(idx, &c)| {
                 match c {
-                    '>' => MoveLeft(1),
-                    '<' => MoveRight(1),
+                    '<' => MoveLeft(1),
+                    '>' => MoveRight(1),
                     '+' => Inc(1),
                     '-' => Dec(1),
                     '.' => Output,
@@ -79,6 +79,7 @@ impl Program {
             }).collect::<Vec<_>>()
         }
     }
+
     pub fn interp(&self) {
         let mut memory = vec![0u8; 30000];
 
@@ -96,10 +97,10 @@ impl Program {
 
         while pc < self.instructions.len() {
             match self.instructions[pc] {
-                MoveLeft(1usize) => dataptr += 1,
-                MoveRight(1usize) => dataptr -= 1,
-                Inc(1u8) => memory[dataptr] = memory[dataptr].wrapping_add(1),
-                Dec(1u8) => memory[dataptr] = memory[dataptr].wrapping_sub(1),
+                MoveLeft(offset) => dataptr -= offset,
+                MoveRight(offset) => dataptr += offset,
+                Inc(increment) => memory[dataptr] = memory[dataptr].wrapping_add(increment),
+                Dec(decrement) => memory[dataptr] = memory[dataptr].wrapping_sub(decrement),
                 Output => print!("{:}", memory[dataptr] as char),
                 Input => memory[dataptr] = get_char(&mut stdin),
                 LoopEntry(target) => if 0 == memory[dataptr] {
@@ -108,7 +109,7 @@ impl Program {
                 LoopExit(target) => if 0 != memory[dataptr] {
                     pc = target;
                 },
-                ref c => panic!("Unknown instruction {:?} at pc={:}", c, pc),
+                // ref c => panic!("Unknown instruction {:?} at pc={:}", c, pc),
             }
             pc += 1;
         }
@@ -126,7 +127,7 @@ fn load_program(fname: String) -> Result<Program> {
 
 fn main() {
     match load_program("examples/mandelbrot.bf".to_string()) {
-        Ok(p) => {
+        Ok(ref mut p) => {
             //println!("{:?}", p);
             p.interp();
         },
