@@ -21,62 +21,54 @@ struct Program {
 }
 
 impl Program {
-    pub fn new(text: String) -> Program
-    {
+    pub fn new(text: String) -> Program {
+        // open brackets while parsing
+        let mut bracket_stack = Vec::new();
+        // idx to patch with index of LoopEntry to patch in
+        let mut relocs = Vec::new();
         // "lex" token stream - aka skip whitespace
         let token = text.chars().filter(move |c| {
             *c == '>' || *c == '<' || *c == '+' || *c == '-' ||
             *c == '.' || *c == ',' || *c == '[' || *c == ']'
+        });
+        let mut instructions = token.enumerate().map(|(idx, c)| {
+            match c {
+                '<' => MoveLeft(1),
+                '>' => MoveRight(1),
+                '+' => Inc(1),
+                '-' => Dec(1),
+                '.' => Output,
+                ',' => Input,
+                '[' => {
+                    bracket_stack.push(idx);
+                    // value must be patched later
+                    LoopEntry(std::usize::MAX)
+                },
+                ']' => {
+                    if let Some(loop_entry) = bracket_stack.pop() {
+                        relocs.push((loop_entry, idx));
+                        LoopExit(loop_entry)
+                    }
+                    else {
+                        panic!("Unbalanced {:?} at pc={:}", c, idx);
+                    }
+                },
+                c => panic!("Unknown instruction {:?} at pc={:}", c, idx),
+            }
         }).collect::<Vec<_>>();
+        if let Some(unbalanced_idx) = bracket_stack.pop() {
+            panic!("Unbalanced {:?} at pc={:}", '[', unbalanced_idx);
+        }
+        for (idx, value) in relocs {
+            if idx >= instructions.len() || LoopEntry(std::usize::MAX) != instructions[idx] {
+                panic!("Unexpected instruction {:?} at pc={:} for reloc", instructions[idx], idx);
+            }
+            else {
+                instructions[idx] = LoopEntry(value);
+            }
+        }
         Program {
-            instructions : token.iter().enumerate().map(|(idx, &c)| {
-                match c {
-                    '<' => MoveLeft(1),
-                    '>' => MoveRight(1),
-                    '+' => Inc(1),
-                    '-' => Dec(1),
-                    '.' => Output,
-                    ',' => Input,
-                    '[' => {
-                        let mut bracket_nesting = 1;
-                        let mut pc = idx + 1;
-    
-                        while (bracket_nesting > 0) && (pc < token.len()) {
-                            match token[pc] {
-                                '[' => bracket_nesting += 1,
-                                ']' => bracket_nesting -= 1,
-                                _ => (),
-                            };
-                            pc += 1;
-                        }
-                        if 0 == bracket_nesting {
-                            pc -= 1;
-                        }
-                        else {
-                            panic!("unmachted '[' at pc={:}", idx);
-                        }
-                        LoopEntry(pc)
-                    },
-                    ']' => {
-                        let mut bracket_nesting = 1;
-                        let mut pc = idx;
-
-                        while (bracket_nesting > 0) && (pc > 0) {
-                            pc -= 1;
-                            match token[pc] {
-                                '[' => bracket_nesting -= 1,
-                                ']' => bracket_nesting += 1,
-                                _ => (),
-                            };
-                        }
-                        if 0 != bracket_nesting {
-                            panic!("unmachted ']' at pc={:}", idx);
-                        }
-                        LoopExit(pc)
-                    },
-                    c => panic!("Unknown instruction {:?} at pc={:}", c, idx),
-                }
-            }).collect::<Vec<_>>()
+            instructions : instructions
         }
     }
 
