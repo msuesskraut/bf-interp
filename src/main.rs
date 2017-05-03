@@ -1,6 +1,9 @@
 use std::fs::File;
 use std::io::{Read, Stdin, Result};
 
+#[cfg(test)]
+mod parser_tests;
+
 #[derive(Debug, Clone, PartialEq)]
 enum Instruction {
     MoveLeft(usize),
@@ -15,7 +18,7 @@ enum Instruction {
 
 use Instruction::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Program {
     instructions: Vec<Instruction>
 }
