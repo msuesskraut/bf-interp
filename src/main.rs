@@ -1,8 +1,10 @@
 use std::fs::File;
-use std::io::{Read, Stdin, Result};
+use std::io::{Read, Write, Result};
 
 #[cfg(test)]
 mod parser_tests;
+#[cfg(test)]
+mod interp_tests;
 
 #[derive(Debug, Clone, PartialEq)]
 enum Instruction {
@@ -75,16 +77,15 @@ impl Program {
         }
     }
 
-    pub fn interp(&self) {
+    pub fn interp(&self, input: &mut Read, output: &mut Write) {
         let mut memory = vec![0u8; 30000];
 
         let mut pc:usize = 0;
         let mut dataptr:usize = 0;
-        let mut stdin = std::io::stdin();
 
-        fn get_char(stdin: &mut Stdin) -> u8 {
+        fn get_char(input: &mut Read) -> u8 {
             let mut buf = [0u8; 1];
-            match stdin.read(&mut buf) {
+            match input.read(&mut buf) {
                 Err(_) => panic!("Cannot read from stdin"),
                 Ok(_) => buf[0]
             }
@@ -96,8 +97,8 @@ impl Program {
                 MoveRight(offset) => dataptr += offset,
                 Inc(increment) => memory[dataptr] = memory[dataptr].wrapping_add(increment),
                 Dec(decrement) => memory[dataptr] = memory[dataptr].wrapping_sub(decrement),
-                Output => print!("{:}", memory[dataptr] as char),
-                Input => memory[dataptr] = get_char(&mut stdin),
+                Output => write!(output, "{:}", memory[dataptr] as char).expect("Output error"),
+                Input => memory[dataptr] = get_char(input),
                 LoopEntry(target) => if 0 == memory[dataptr] {
                     pc = target;
                 },
@@ -124,7 +125,7 @@ fn main() {
     match load_program("examples/mandelbrot.bf".to_string()) {
         Ok(ref mut p) => {
             //println!("{:?}", p);
-            p.interp();
+            p.interp(&mut std::io::stdin(), &mut std::io::stdout());
         },
         Err(err) => panic!("Cannot read file because {:?}", err),
     }
