@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Write, Result};
 
+mod buffer;
 #[cfg(test)]
 mod parser_tests;
 #[cfg(test)]
