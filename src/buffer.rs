@@ -5,16 +5,16 @@ use std::io::{Read, Write, Result, Error, ErrorKind};
 
 #[allow(dead_code)]
 pub struct IBuffer {
-    buf : Vec<u8>,
-    offset : usize,
+    buf: Vec<u8>,
+    offset: usize,
 }
 
 #[allow(dead_code)]
 impl IBuffer {
-    pub fn new(s : String) -> IBuffer {
+    pub fn new(s: String) -> IBuffer {
         IBuffer {
-            buf : s.as_bytes().to_vec(),
-            offset : 0
+            buf: s.as_bytes().to_vec(),
+            offset: 0,
         }
     }
 }
@@ -30,15 +30,13 @@ impl Read for IBuffer {
 
 #[allow(dead_code)]
 pub struct OBuffer {
-    buf : String
+    buf: String,
 }
 
 #[allow(dead_code)]
 impl OBuffer {
     pub fn new() -> OBuffer {
-        OBuffer {
-            buf : String::new()
-        }
+        OBuffer { buf: String::new() }
     }
 
     pub fn to_string(self) -> String {
@@ -52,7 +50,7 @@ impl Write for OBuffer {
             Ok(s) => {
                 self.buf += s;
                 Ok(buf.len())
-            },
+            }
             _ => Err(Error::from(ErrorKind::Other)),
         }
     }
@@ -71,10 +69,13 @@ mod test {
 
         let mut buf = [0u8; 6];
 
-        let res1 = in_buf.read(&mut buf); 
-        assert!(match res1 { Ok(6) => true, _ => false });
+        let res1 = in_buf.read(&mut buf);
+        assert!(match res1 {
+                    Ok(6) => true,
+                    _ => false,
+                });
         assert_eq!(['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8, ' ' as u8],
-            buf);
+                   buf);
     }
 
     #[test]
@@ -83,11 +84,14 @@ mod test {
 
         let mut buf = [0u8; 6];
 
-        let _ = in_buf.read(&mut buf); 
-        let res = in_buf.read(&mut buf); 
-        assert!(match res { Ok(5) => true, _ => false });
+        let _ = in_buf.read(&mut buf);
+        let res = in_buf.read(&mut buf);
+        assert!(match res {
+                    Ok(5) => true,
+                    _ => false,
+                });
         assert_eq!(['w' as u8, 'o' as u8, 'r' as u8, 'l' as u8, 'd' as u8],
-            buf[0..5]);
+                   buf[0..5]);
     }
 
     #[test]
@@ -96,10 +100,13 @@ mod test {
 
         let mut buf = [0u8; 6];
 
-        let _ = in_buf.read(&mut buf); 
-        let _ = in_buf.read(&mut buf); 
-        let res = in_buf.read(&mut buf); 
-        assert!(match res { Ok(0) => true, _ => false });
+        let _ = in_buf.read(&mut buf);
+        let _ = in_buf.read(&mut buf);
+        let res = in_buf.read(&mut buf);
+        assert!(match res {
+                    Ok(0) => true,
+                    _ => false,
+                });
     }
 
     #[test]
@@ -108,7 +115,10 @@ mod test {
 
         let res = out_buf.write(&['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8]);
 
-        assert!(match res { Ok(5) => true, _ => false });
+        assert!(match res {
+                    Ok(5) => true,
+                    _ => false,
+                });
         assert_eq!("Hello".to_string(), out_buf.to_string());
     }
 
@@ -117,9 +127,13 @@ mod test {
         let mut out_buf = OBuffer::new();
 
         let _ = out_buf.write(&['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8]);
-        let res = out_buf.write(&[' ' as u8, 'w' as u8, 'o' as u8, 'r' as u8, 'l' as u8, 'd' as u8]);
+        let res = out_buf.write(&[' ' as u8, 'w' as u8, 'o' as u8, 'r' as u8, 'l' as u8,
+                                  'd' as u8]);
 
-        assert!(match res { Ok(6) => true, _ => false });
+        assert!(match res {
+                    Ok(6) => true,
+                    _ => false,
+                });
         assert_eq!("Hello world".to_string(), out_buf.to_string());
     }
 
