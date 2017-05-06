@@ -42,8 +42,7 @@ mod test {
                     Ok(6) => true,
                     _ => false,
                 });
-        assert_eq!([b'H', b'e', b'l', b'l', b'o', b' '],
-                   buf);
+        assert_eq!([b'H', b'e', b'l', b'l', b'o', b' '], buf);
     }
 
     #[test]
@@ -58,8 +57,7 @@ mod test {
                     Ok(5) => true,
                     _ => false,
                 });
-        assert_eq!([b'w', b'o', b'r', b'l', b'd'],
-                   buf[0..5]);
+        assert_eq!([b'w', b'o', b'r', b'l', b'd'], buf[0..5]);
     }
 
     #[test]
