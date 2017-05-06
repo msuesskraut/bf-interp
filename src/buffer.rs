@@ -1,7 +1,6 @@
-use std::string::String;
 use std::str;
 use std::cmp;
-use std::io::{Read, Write, Result, Error, ErrorKind};
+use std::io::{Read, Result};
 
 #[allow(dead_code)]
 pub struct IBuffer {
@@ -11,7 +10,7 @@ pub struct IBuffer {
 
 #[allow(dead_code)]
 impl IBuffer {
-    pub fn new(s: String) -> IBuffer {
+    pub fn from_str(s: &str) -> IBuffer {
         IBuffer {
             buf: s.as_bytes().to_vec(),
             offset: 0,
@@ -28,48 +27,13 @@ impl Read for IBuffer {
     }
 }
 
-#[allow(dead_code)]
-pub struct OBuffer {
-    buf: String,
-}
-
-#[allow(dead_code)]
-impl OBuffer {
-    pub fn new() -> OBuffer {
-        OBuffer { buf: String::new() }
-    }
-
-    pub fn to_string(self) -> String {
-        self.buf
-    }
-
-    pub fn to_vec(self) -> Vec<u8> {
-        self.buf.as_bytes().to_vec()
-    }
-}
-
-impl Write for OBuffer {
-    fn write(&mut self, buf: &[u8]) -> Result<usize> {
-        match str::from_utf8(buf) {
-            Ok(s) => {
-                self.buf += s;
-                Ok(buf.len())
-            }
-            _ => Err(Error::from(ErrorKind::Other)),
-        }
-    }
-    fn flush(&mut self) -> Result<()> {
-        Ok(())
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn read_from_string() {
-        let mut in_buf = IBuffer::new("Hello world".to_string());
+        let mut in_buf = IBuffer::from_str("Hello world");
 
         let mut buf = [0u8; 6];
 
@@ -78,13 +42,13 @@ mod test {
                     Ok(6) => true,
                     _ => false,
                 });
-        assert_eq!(['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8, ' ' as u8],
+        assert_eq!([b'H', b'e', b'l', b'l', b'o', b' '],
                    buf);
     }
 
     #[test]
     fn read_from_string_overflow() {
-        let mut in_buf = IBuffer::new("Hello world".to_string());
+        let mut in_buf = IBuffer::from_str("Hello world");
 
         let mut buf = [0u8; 6];
 
@@ -94,13 +58,13 @@ mod test {
                     Ok(5) => true,
                     _ => false,
                 });
-        assert_eq!(['w' as u8, 'o' as u8, 'r' as u8, 'l' as u8, 'd' as u8],
+        assert_eq!([b'w', b'o', b'r', b'l', b'd'],
                    buf[0..5]);
     }
 
     #[test]
     fn read_from_string_eof() {
-        let mut in_buf = IBuffer::new("Hello world".to_string());
+        let mut in_buf = IBuffer::from_str("Hello world");
 
         let mut buf = [0u8; 6];
 
@@ -111,34 +75,6 @@ mod test {
                     Ok(0) => true,
                     _ => false,
                 });
-    }
-
-    #[test]
-    fn write_once_to_buffer() {
-        let mut out_buf = OBuffer::new();
-
-        let res = out_buf.write(&['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8]);
-
-        assert!(match res {
-                    Ok(5) => true,
-                    _ => false,
-                });
-        assert_eq!("Hello".to_string(), out_buf.to_string());
-    }
-
-    #[test]
-    fn write_twice_to_buffer() {
-        let mut out_buf = OBuffer::new();
-
-        let _ = out_buf.write(&['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8]);
-        let res = out_buf.write(&[' ' as u8, 'w' as u8, 'o' as u8, 'r' as u8, 'l' as u8,
-                                  'd' as u8]);
-
-        assert!(match res {
-                    Ok(6) => true,
-                    _ => false,
-                });
-        assert_eq!("Hello world".to_string(), out_buf.to_string());
     }
 
 }
