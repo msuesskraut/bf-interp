@@ -42,6 +42,10 @@ impl OBuffer {
     pub fn to_string(self) -> String {
         self.buf
     }
+
+    pub fn to_vec(self) -> Vec<u8> {
+        self.buf.as_bytes().to_vec()
+    }
 }
 
 impl Write for OBuffer {
