@@ -7,7 +7,7 @@ mod parser_tests;
 #[cfg(test)]
 mod interp_tests;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Instruction {
     MoveLeft(usize),
     MoveRight(usize),
@@ -80,6 +80,86 @@ impl Program {
         Program { instructions: instructions }
     }
 
+    pub fn optimize(&self) -> Program {
+        // optimized program
+        let mut instructions:Vec<Instruction> = Vec::new();
+        // open brackets while parsing
+        let mut bracket_stack = Vec::new();
+        // idx to patch with index of LoopEntry to patch in
+        let mut relocs = Vec::new();
+
+        for (idx, instr) in self.instructions.iter().enumerate() {
+            match *instr {
+                MoveLeft(offset) => {
+                    let last_instr = instructions.last().cloned();
+                    if let Some(MoveLeft(old_offset)) = last_instr {
+                        let last_idx = instructions.len() - 1;
+                        instructions[last_idx] = MoveLeft(old_offset + offset);
+                    }
+                    else {
+                        instructions.push(*instr);
+                    }
+                }
+                MoveRight(offset) => {
+                    let last_instr = instructions.last().cloned();
+                    if let Some(MoveRight(old_offset)) = last_instr {
+                        let last_idx = instructions.len() - 1;
+                        instructions[last_idx] = MoveRight(old_offset + offset);
+                    }
+                    else {
+                        instructions.push(*instr);
+                    }
+                }
+                Inc(val) => {
+                    let last_instr = instructions.last().cloned();
+                    if let Some(Inc(old_val)) = last_instr {
+                        let last_idx = instructions.len() - 1;
+                        instructions[last_idx] = Inc(old_val.wrapping_add(val));
+                    }
+                    else {
+                        instructions.push(*instr);
+                    }
+                }
+                Dec(val) => {
+                    let last_instr = instructions.last().cloned();
+                    if let Some(Dec(old_val)) = last_instr {
+                        let last_idx = instructions.len() - 1;
+                        instructions[last_idx] = Dec(old_val.wrapping_add(val));
+                    }
+                    else {
+                        instructions.push(*instr);
+                    }
+                }
+                LoopEntry(_) => {
+                    bracket_stack.push(instructions.len());
+                    instructions.push(LoopEntry(std::usize::MAX));
+                }
+                LoopExit(_) => {
+                    if let Some(loop_entry) = bracket_stack.pop() {
+                        relocs.push((loop_entry, instructions.len()));
+                        instructions.push(LoopExit(loop_entry));
+                    } else {
+                        panic!("Unbalanced {:?} at pc={:}", instr, idx);
+                    }
+                }
+                instr => instructions.push(instr),
+            }
+        }
+        if let Some(unbalanced_idx) = bracket_stack.pop() {
+            panic!("Unbalanced {:?} at pc={:}", '[', unbalanced_idx);
+        }
+        for (idx, value) in relocs {
+            if idx >= instructions.len() || LoopEntry(std::usize::MAX) != instructions[idx] {
+                panic!("Unexpected instruction {:?} at pc={:} for reloc",
+                       instructions[idx],
+                       idx);
+            } else {
+                instructions[idx] = LoopEntry(value);
+            }
+        }
+        Program { instructions: instructions }
+    }
+
     pub fn interp(&self, input: &mut Read, output: &mut Write) {
         let mut memory = vec![0u8; 30000];
 
@@ -131,6 +211,7 @@ fn load_program(fname: String) -> Result<Program> {
 fn main() {
     match load_program("examples/mandelbrot.bf".to_string()) {
         Ok(ref mut p) => {
+            let p = p.optimize();
             //println!("{:?}", p);
             p.interp(&mut std::io::stdin(), &mut std::io::stdout());
         }
