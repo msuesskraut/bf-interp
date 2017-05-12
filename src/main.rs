@@ -6,6 +6,8 @@ mod buffer;
 mod parser_tests;
 #[cfg(test)]
 mod interp_tests;
+#[cfg(test)]
+mod opt_test;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Instruction {
