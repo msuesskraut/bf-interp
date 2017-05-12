@@ -82,7 +82,7 @@ impl Program {
 
     pub fn optimize(&self) -> Program {
         // optimized program
-        let mut instructions:Vec<Instruction> = Vec::new();
+        let mut instructions: Vec<Instruction> = Vec::new();
         // open brackets while parsing
         let mut bracket_stack = Vec::new();
         // idx to patch with index of LoopEntry to patch in
@@ -95,8 +95,7 @@ impl Program {
                     if let Some(MoveLeft(old_offset)) = last_instr {
                         let last_idx = instructions.len() - 1;
                         instructions[last_idx] = MoveLeft(old_offset + offset);
-                    }
-                    else {
+                    } else {
                         instructions.push(*instr);
                     }
                 }
@@ -105,8 +104,7 @@ impl Program {
                     if let Some(MoveRight(old_offset)) = last_instr {
                         let last_idx = instructions.len() - 1;
                         instructions[last_idx] = MoveRight(old_offset + offset);
-                    }
-                    else {
+                    } else {
                         instructions.push(*instr);
                     }
                 }
@@ -115,8 +113,7 @@ impl Program {
                     if let Some(Inc(old_val)) = last_instr {
                         let last_idx = instructions.len() - 1;
                         instructions[last_idx] = Inc(old_val.wrapping_add(val));
-                    }
-                    else {
+                    } else {
                         instructions.push(*instr);
                     }
                 }
@@ -125,8 +122,7 @@ impl Program {
                     if let Some(Dec(old_val)) = last_instr {
                         let last_idx = instructions.len() - 1;
                         instructions[last_idx] = Dec(old_val.wrapping_add(val));
-                    }
-                    else {
+                    } else {
                         instructions.push(*instr);
                     }
                 }
