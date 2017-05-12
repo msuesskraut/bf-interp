@@ -1,5 +1,7 @@
 # bf-interp
 
+[![Build Status](https://travis-ci.org/msuesskraut/bf-interp.svg?branch=master)](https://travis-ci.org/msuesskraut/bf-interp)
+
 A brainfuck interpreter in Rust.
 Its main purpose is to learn some Rust.
 
