@@ -125,6 +125,19 @@ fn input() {
 }
 
 #[test]
+fn skip_loop() {
+    execute_and_check(&[MoveRight(1),
+                        Inc(1),
+                        MoveLeft(1),
+                        LoopEntry(5),
+                        Inc(1),
+                        LoopExit(3),
+                        Output],
+                      "",
+                      &[0]);
+}
+
+#[test]
 fn loop_set_zero() {
     execute_and_check(&[Inc(100), LoopEntry(3), Dec(1), LoopExit(1), Output],
                       "",
