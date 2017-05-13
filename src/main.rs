@@ -23,54 +23,40 @@ enum Instruction {
 
 use Instruction::*;
 
-#[derive(Debug, PartialEq)]
-struct Program {
-    instructions: Vec<Instruction>,
+#[derive(Debug)]
+struct LoopHelper {
+    bracket_stack: Vec<usize>,
+    relocs: Vec<(usize, usize)>,
 }
 
-impl Program {
-    pub fn new(text: String) -> Program {
-        // open brackets while parsing
-        let mut bracket_stack = Vec::new();
-        // idx to patch with index of LoopEntry to patch in
-        let mut relocs = Vec::new();
-        // "lex" token stream - aka skip whitespace
-        let token = text.chars()
-            .filter(move |c| {
-                        *c == '>' || *c == '<' || *c == '+' || *c == '-' || *c == '.' ||
-                        *c == ',' || *c == '[' || *c == ']'
-                    });
-        let mut instructions = token
-            .enumerate()
-            .map(|(idx, c)| {
-                match c {
-                    '<' => MoveLeft(1),
-                    '>' => MoveRight(1),
-                    '+' => Inc(1),
-                    '-' => Dec(1),
-                    '.' => Output,
-                    ',' => Input,
-                    '[' => {
-                        bracket_stack.push(idx);
-                        // value must be patched later
-                        LoopEntry(std::usize::MAX)
-                    }
-                    ']' => {
-                        if let Some(loop_entry) = bracket_stack.pop() {
-                            relocs.push((loop_entry, idx));
-                            LoopExit(loop_entry)
-                        } else {
-                            panic!("Unbalanced {:?} at pc={:}", c, idx);
-                        }
-                    }
-                    c => panic!("Unknown instruction {:?} at pc={:}", c, idx),
-                }
-            })
-            .collect::<Vec<_>>();
-        if let Some(unbalanced_idx) = bracket_stack.pop() {
+impl LoopHelper {
+    fn new() -> LoopHelper {
+        LoopHelper {
+            bracket_stack: Vec::new(),
+            relocs: Vec::new(),
+        }
+    }
+
+    fn loop_entry(&mut self, idx: usize) -> Instruction {
+        self.bracket_stack.push(idx);
+        // value must be patched later
+        LoopEntry(std::usize::MAX)
+    }
+
+    fn loop_exit(&mut self, idx: usize) -> Instruction {
+        if let Some(loop_entry) = self.bracket_stack.pop() {
+            self.relocs.push((loop_entry, idx));
+            LoopExit(loop_entry)
+        } else {
+            panic!("Unbalanced {:?} at pc={:}", ']', idx);
+        }
+    }
+
+    fn relocate(mut self, instructions: &mut Vec<Instruction>) {
+        if let Some(unbalanced_idx) = self.bracket_stack.pop() {
             panic!("Unbalanced {:?} at pc={:}", '[', unbalanced_idx);
         }
-        for (idx, value) in relocs {
+        for (idx, value) in self.relocs {
             if idx >= instructions.len() || LoopEntry(std::usize::MAX) != instructions[idx] {
                 panic!("Unexpected instruction {:?} at pc={:} for reloc",
                        instructions[idx],
@@ -79,18 +65,47 @@ impl Program {
                 instructions[idx] = LoopEntry(value);
             }
         }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct Program {
+    instructions: Vec<Instruction>,
+}
+
+impl Program {
+    pub fn new(text: String) -> Program {
+        let mut loop_helper = LoopHelper::new();
+        // "lex" token stream - aka skip whitespace
+        let token = text.chars()
+            .filter(move |c| {
+                        *c == '>' || *c == '<' || *c == '+' || *c == '-' || *c == '.' ||
+                        *c == ',' || *c == '[' || *c == ']'
+                    });
+        let mut instructions = token
+            .enumerate()
+            .map(|(idx, c)| match c {
+                     '<' => MoveLeft(1),
+                     '>' => MoveRight(1),
+                     '+' => Inc(1),
+                     '-' => Dec(1),
+                     '.' => Output,
+                     ',' => Input,
+                     '[' => loop_helper.loop_entry(idx),
+                     ']' => loop_helper.loop_exit(idx),
+                     c => panic!("Unknown instruction {:?} at pc={:}", c, idx),
+                 })
+            .collect::<Vec<_>>();
+        loop_helper.relocate(&mut instructions);
         Program { instructions: instructions }
     }
 
     pub fn optimize(&self) -> Program {
+        let mut loop_helper = LoopHelper::new();
         // optimized program
         let mut instructions: Vec<Instruction> = Vec::new();
-        // open brackets while parsing
-        let mut bracket_stack = Vec::new();
-        // idx to patch with index of LoopEntry to patch in
-        let mut relocs = Vec::new();
 
-        for (idx, instr) in self.instructions.iter().enumerate() {
+        for instr in self.instructions.iter() {
             match *instr {
                 MoveLeft(offset) => {
                     let last_instr = instructions.last().cloned();
@@ -129,32 +144,17 @@ impl Program {
                     }
                 }
                 LoopEntry(_) => {
-                    bracket_stack.push(instructions.len());
-                    instructions.push(LoopEntry(std::usize::MAX));
+                    let idx = instructions.len();
+                    instructions.push(loop_helper.loop_entry(idx));
                 }
                 LoopExit(_) => {
-                    if let Some(loop_entry) = bracket_stack.pop() {
-                        relocs.push((loop_entry, instructions.len()));
-                        instructions.push(LoopExit(loop_entry));
-                    } else {
-                        panic!("Unbalanced {:?} at pc={:}", instr, idx);
-                    }
+                    let idx = instructions.len();
+                    instructions.push(loop_helper.loop_exit(idx));
                 }
                 instr => instructions.push(instr),
             }
         }
-        if let Some(unbalanced_idx) = bracket_stack.pop() {
-            panic!("Unbalanced {:?} at pc={:}", '[', unbalanced_idx);
-        }
-        for (idx, value) in relocs {
-            if idx >= instructions.len() || LoopEntry(std::usize::MAX) != instructions[idx] {
-                panic!("Unexpected instruction {:?} at pc={:} for reloc",
-                       instructions[idx],
-                       idx);
-            } else {
-                instructions[idx] = LoopEntry(value);
-            }
-        }
+        loop_helper.relocate(&mut instructions);
         Program { instructions: instructions }
     }
 
