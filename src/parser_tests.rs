@@ -45,3 +45,15 @@ fn parse_program_with_all_instructions() {
                }, // 8
                Program::new(",+>+[-]<.".to_string()));
 }
+
+#[test]
+#[should_panic]
+fn parse_unbalanced_move_left() {
+    let _ = Program::new("[".to_string());
+}
+
+#[test]
+#[should_panic]
+fn parse_unbalanced_move_right() {
+    let _ = Program::new("]".to_string());
+}

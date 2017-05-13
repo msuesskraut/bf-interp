@@ -37,11 +37,8 @@ mod test {
 
         let mut buf = [0u8; 6];
 
-        let res1 = in_buf.read(&mut buf);
-        assert!(match res1 {
-                    Ok(6) => true,
-                    _ => false,
-                });
+        let res = in_buf.read(&mut buf);
+        assert_eq!(6, res.expect("read must be ok"));
         assert_eq!([b'H', b'e', b'l', b'l', b'o', b' '], buf);
     }
 
@@ -53,10 +50,7 @@ mod test {
 
         let _ = in_buf.read(&mut buf);
         let res = in_buf.read(&mut buf);
-        assert!(match res {
-                    Ok(5) => true,
-                    _ => false,
-                });
+        assert_eq!(5, res.expect("read must be ok"));
         assert_eq!([b'w', b'o', b'r', b'l', b'd'], buf[0..5]);
     }
 
@@ -69,10 +63,7 @@ mod test {
         let _ = in_buf.read(&mut buf);
         let _ = in_buf.read(&mut buf);
         let res = in_buf.read(&mut buf);
-        assert!(match res {
-                    Ok(0) => true,
-                    _ => false,
-                });
+        assert_eq!(0, res.expect("read must be ok"));
     }
 
 }
