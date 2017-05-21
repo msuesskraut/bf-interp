@@ -1,3 +1,5 @@
+//! Tests for `parser::parse`.
+
 use super::*;
 use Instruction::*;
 

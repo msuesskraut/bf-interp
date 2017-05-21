@@ -1,3 +1,5 @@
+//! Tests for optimizer `opt::optimize`.
+
 use ast::Program;
 use ast::Instruction::*;
 use opt::optimize;

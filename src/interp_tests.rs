@@ -1,3 +1,5 @@
+//! Interpreter tests.
+
 use super::*;
 
 use Instruction::*;

@@ -1,3 +1,5 @@
+//! Tests for `IBuffer`.
+
 use super::*;
 
 use buffer::IBuffer;

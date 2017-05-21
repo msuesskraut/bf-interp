@@ -1,8 +1,15 @@
+//! Optimizer `opt::optimize`.
+
 use ast::{Instruction, Program};
 use ast::Instruction::*;
 
 use loop_helper::LoopHelper;
 
+/// Returns an optimized version of `program`.
+/// Optimized means, that the returned program will executed fewer or
+/// at-most as many instructions at runtime as then input `program`.
+/// Optimizing an already optimized program is legal, but will yield
+/// the same program as then input `program`.
 pub fn optimize(program: &Program) -> Program {
     let mut loop_helper = LoopHelper::new();
     // optimized program
