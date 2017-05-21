@@ -1,11 +1,13 @@
 use super::*;
 
+use Instruction::*;
 use buffer::*;
 
 fn execute_and_check(program: &[Instruction], input: &str, exp_output: &[u8]) {
     let mut input = IBuffer::from_str(input);
     let mut output = Vec::new();
-    Program { instructions: program.to_vec() }.interp(&mut input, &mut output);
+    let p = Program { instructions: program.to_vec() };
+    interp::interp(&p, &mut input, &mut output);
     assert_eq!(exp_output, output.as_slice());
 }
 
