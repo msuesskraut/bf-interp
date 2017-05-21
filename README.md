@@ -48,3 +48,13 @@ The optimizations also use `loop_helper.rs` to re-calculate these loop-ups
 when reducing the total number of instructions.
 
 Further optimizations will follow.
+
+## Testing
+
+The main modules `parser.rs`, `opt.rs` and `interp.rs` are
+accomponied with test modules `parser_tests.rs`, `opt_tests.rs` and `interp_tests.rs`.
+`loop_helper.rs` ist tested indirectly with `parser_tests.rs` and `interp_tests.rs`.
+`ast.rs` does not contain functions, that could be tested.
+
+The module `buffer.rs` is only used in the `interp_tests.rs` to test without `std::io::Stdin`.
+It containts its own tests in `buffer_tests.rs`.

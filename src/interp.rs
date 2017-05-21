@@ -1,8 +1,15 @@
+//! Interpreter of brainfuck ast.
+
 use std::io::{Read, Write};
 
 use ast::Program;
 use ast::Instruction::*;
 
+/// Interprets the brainfuck `program`.
+/// Reads (instruction `Input` aka `,`) from input.
+/// Writes (instruction `Output` aka `.`) to output.
+/// The size of the band is in general undefined.
+/// Currentl,y its 30000 bytes.
 pub fn interp(program: &Program, input: &mut Read, output: &mut Write) {
     let mut memory = vec![0u8; 30000];
 
