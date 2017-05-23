@@ -3,7 +3,7 @@
 use std::usize;
 
 use ast::Instruction;
-use Instruction::*;
+use self::Instruction::*;
 
 /// LoopHelper does the book-keeping while assembling a new list of instructions
 /// (brainfuck program).

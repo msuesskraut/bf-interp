@@ -1,7 +1,7 @@
 //! Tests for `parser::parse`.
 
-use super::*;
-use Instruction::*;
+use ast::Program;
+use ast::Instruction::*;
 
 use parser::parse;
 

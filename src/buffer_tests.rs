@@ -1,8 +1,7 @@
 //! Tests for `IBuffer`.
 
-use super::*;
-
 use buffer::IBuffer;
+use std::io::Read;
 
 #[test]
 fn read_from_string() {

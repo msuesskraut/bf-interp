@@ -2,7 +2,8 @@
 
 use super::*;
 
-use Instruction::*;
+use ast::{Program, Instruction};
+use self::Instruction::*;
 use buffer::*;
 
 fn execute_and_check(program: &[Instruction], input: &str, exp_output: &[u8]) {

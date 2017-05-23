@@ -1,29 +1,13 @@
-//! bf-interp is a brainfuck interpreter.
+//! Example that executes mandelbrot.bf
 
-// `pub` just to include them in the documentation.
-pub mod ast;
-pub mod loop_helper;
-pub mod parser;
-pub mod opt;
-pub mod interp;
+extern crate bf_interp;
 
-#[cfg(test)]
-mod buffer;
-#[cfg(test)]
-mod buffer_tests;
-#[cfg(test)]
-mod parser_tests;
-#[cfg(test)]
-mod interp_tests;
-#[cfg(test)]
-mod opt_tests;
-
-use ast::{Instruction, Program};
+use bf_interp::{ast, parser, opt, interp};
 
 use std::fs::File;
 use std::io::{Read, Result};
 
-fn load_program(fname: String) -> Result<Program> {
+fn load_program(fname: String) -> Result<ast::Program> {
     let mut file = File::open(fname)?;
     let mut contents: Vec<u8> = Vec::new();
     file.read_to_end(&mut contents)?;

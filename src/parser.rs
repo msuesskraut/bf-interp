@@ -1,7 +1,7 @@
 //! Parser `parser::parse` for brainfuck.
 
 use ast::Program;
-use Instruction::*;
+use ast::Instruction::*;
 use loop_helper::LoopHelper;
 
 /// Parses (and lexes) the input `text` and returns an ast.
