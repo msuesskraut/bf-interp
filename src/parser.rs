@@ -1,4 +1,4 @@
-/// Parser `parser::parse` for brainfuck.
+//! Parser `parser::parse` for brainfuck.
 
 use ast::Program;
 use Instruction::*;
